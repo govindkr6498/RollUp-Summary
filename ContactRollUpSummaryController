@@ -1,0 +1,90 @@
+public class ContactRollUpSummaryController {
+    public static void countContactRecord(List<Contact> contactRecords){
+        Set<id> accountIdSet = new Set<id>();
+        for(Contact contactRecord : contactRecords){
+            if(contactRecord.accountId != Null){
+                accountIdSet.add(contactRecord.accountId);
+            }
+        }
+        /*
+// Approach 1
+List<Account> accountRecordList = New List<Account>();
+for(Account accountRecord : [Select id,Total_Contact__c,(Select id from Contacts) from Account where Id IN: accountIdSet]){
+List<Contact> contactList = accountRecord.Contacts;
+if(contactList != Null){
+Integer countContactRecord = contactList.size();
+accountRecord.Total_Contact__c = countContactRecord;
+accountRecordList.add(accountRecord);
+}
+}
+System.debug('accountRecordList: '+accountRecordList);
+if(!accountRecordList.IsEmpty()){
+update accountRecordList;
+}
+*/
+        
+        // Approach 2
+        List<Account> accountRecord = New List<Account>();
+        for(AggregateResult result : [Select Count(Id) totalContact, AccountId from Contact where AccountId IN:accountIdSet group by AccountId]){
+            String accountId = (String)result.get('AccountId');
+            Integer totalContact = (Integer)result.get('totalContact');
+            Account acc = New Account();
+            acc.Id = accountId;
+            acc.Total_Contact__c = totalContact;
+            accountRecord.add(acc);
+        }
+        if(!accountRecord.IsEmpty()){
+            update accountRecord;
+        }
+    }
+    
+    public static void countContactAfterUnDeleteContactRecord(List<Contact> contactRecords){
+        countContactRecord(contactRecords);
+    }
+    
+    public static void countContactAfterDeleteContactRecord(List<Contact> oldContactRecords){
+        System.debug('oldContactRecords :'+oldContactRecords);
+        Set<id> accountIdSet = new Set<id>();
+        for(Contact contactRecord : oldContactRecords){
+            System.debug('contactRecord :'+contactRecord);
+            if(contactRecord.accountId != Null){
+                accountIdSet.add(contactRecord.accountId);
+            }
+        }
+        List<Account> accountRecord = New List<Account>();
+        for(AggregateResult result : [Select Count(Id) totalContact, AccountId from Contact where AccountId IN:accountIdSet group by AccountId]){
+            String accountId = (String)result.get('AccountId');
+            Integer totalContact = (Integer)result.get('totalContact');
+            Account acc = New Account();
+            acc.Id = accountId;
+            acc.Total_Contact__c = totalContact;
+            accountRecord.add(acc);
+        }
+        System.debug('accountRecord :'+accountRecord);
+        if(!accountRecord.IsEmpty()){
+            update accountRecord;
+        }
+    }
+    
+    public static void countContactAfterUpdateContactRecord(List<Contact> newContactRecords, Map<Id,Contact> oldMapContactRecords){
+        Set<id> accountIdSet = new Set<id>();
+        for(Contact contactRecord : newContactRecords){
+            if(contactRecord.accountId != oldMapContactRecords.get(contactRecord.Id).accountId){
+                accountIdSet.add(contactRecord.accountId);
+                accountIdSet.add(oldMapContactRecords.get(contactRecord.Id).accountId);
+            }
+        }
+        List<Account> accountRecord = New List<Account>();
+        for(AggregateResult result : [Select Count(Id) totalContact, AccountId from Contact where AccountId IN:accountIdSet group by AccountId]){
+            String accountId = (String)result.get('AccountId');
+            Integer totalContact = (Integer)result.get('totalContact');
+            Account acc = New Account();
+            acc.Id = accountId;
+            acc.Total_Contact__c = totalContact;
+            accountRecord.add(acc);
+        }
+        if(!accountRecord.IsEmpty()){
+            update accountRecord;
+        }
+    }
+}
