@@ -1,0 +1,16 @@
+trigger ContactTrigger on Contact (after insert,after update,After delete,after undelete) {
+    if(Trigger.IsAfter){
+        if(Trigger.IsInsert){
+            ContactRollUpSummaryController.countContactRecord(Trigger.New);
+        }
+        if(Trigger.IsUndelete){
+            ContactRollUpSummaryController.countContactAfterUnDeleteContactRecord(Trigger.New);
+        }
+        if(Trigger.IsDelete){
+            ContactRollUpSummaryController.countContactAfterDeleteContactRecord(Trigger.Old);
+        }
+        if(Trigger.IsUpdate){
+            ContactRollUpSummaryController.countContactAfterUpdateContactRecord(Trigger.New,Trigger.OldMap);
+        }
+    }
+}
